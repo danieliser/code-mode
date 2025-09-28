@@ -1,0 +1,170 @@
+{
+  "runtimes": {
+    "typescript": {
+      "name": "TypeScript Runtime",
+      "language": "typescript",
+      "version": "5.0.0",
+      "timeout": 30000,
+      "memoryLimit": "512MB",
+      "sandboxType": "vm2",
+      "allowedModules": [
+        "crypto",
+        "path",
+        "url",
+        "querystring",
+        "util",
+        "events",
+        "stream",
+        "buffer",
+        "string_decoder",
+        "fs/promises"
+      ],
+      "deniedOperations": [
+        "eval",
+        "Function",
+        "require",
+        "process.exit",
+        "process.abort",
+        "child_process"
+      ],
+      "permissions": {
+        "fileSystem": {
+          "read": ["./data/**", "./config/**", "./tools/**"],
+          "write": ["./data/**", "/tmp/**"],
+          "execute": []
+        },
+        "network": {
+          "allowedHosts": ["localhost", "127.0.0.1"],
+          "allowedPorts": [8001, 12008]
+        },
+        "system": {
+          "allowedCommands": [],
+          "maxProcesses": 1
+        }
+      }
+    },
+    "python": {
+      "name": "Python Data Analysis Runtime",
+      "language": "python",
+      "version": "3.11",
+      "timeout": 60000,
+      "memoryLimit": "1GB",
+      "sandboxType": "subprocess",
+      "allowedModules": [
+        "pandas",
+        "numpy",
+        "matplotlib",
+        "seaborn",
+        "json",
+        "csv",
+        "datetime",
+        "pathlib",
+        "requests",
+        "asyncio"
+      ],
+      "deniedOperations": [
+        "eval",
+        "exec",
+        "compile",
+        "import os",
+        "import subprocess",
+        "__import__"
+      ],
+      "permissions": {
+        "fileSystem": {
+          "read": ["./data/**", "./analysis-legacy/**", "./venv/**"],
+          "write": ["./data/**", "/tmp/**", "./output/**"],
+          "execute": ["./venv/bin/python"]
+        },
+        "network": {
+          "allowedHosts": ["localhost", "127.0.0.1"],
+          "allowedPorts": [8001, 12008]
+        },
+        "system": {
+          "allowedCommands": ["python", "pip"],
+          "maxProcesses": 3
+        }
+      }
+    },
+    "javascript": {
+      "name": "JavaScript Runtime",
+      "language": "javascript",
+      "version": "ES2022",
+      "timeout": 15000,
+      "memoryLimit": "256MB",
+      "sandboxType": "vm2",
+      "allowedModules": [
+        "crypto",
+        "path",
+        "url",
+        "querystring",
+        "util"
+      ],
+      "deniedOperations": [
+        "eval",
+        "Function",
+        "require",
+        "process",
+        "global"
+      ],
+      "permissions": {
+        "fileSystem": {
+          "read": ["./data/**"],
+          "write": ["/tmp/**"],
+          "execute": []
+        },
+        "network": {
+          "allowedHosts": ["localhost"],
+          "allowedPorts": [8001, 12008]
+        },
+        "system": {
+          "allowedCommands": [],
+          "maxProcesses": 1
+        }
+      }
+    },
+    "bash": {
+      "name": "Bash Script Runtime",
+      "language": "bash",
+      "version": "5.0",
+      "timeout": 45000,
+      "memoryLimit": "128MB",
+      "sandboxType": "subprocess",
+      "allowedModules": [],
+      "deniedOperations": [
+        "rm -rf",
+        "dd if=",
+        "mkfs",
+        "fdisk",
+        "sudo",
+        "su"
+      ],
+      "permissions": {
+        "fileSystem": {
+          "read": ["./data/**", "./tools/**", "./scripts/**"],
+          "write": ["./data/**", "/tmp/**"],
+          "execute": ["./tools/**", "./scripts/**"]
+        },
+        "network": {
+          "allowedHosts": ["localhost", "127.0.0.1"],
+          "allowedPorts": [22, 3306, 8001, 12008]
+        },
+        "system": {
+          "allowedCommands": [
+            "ls", "cat", "grep", "awk", "sed", "sort", "uniq",
+            "wc", "head", "tail", "find", "curl", "jq",
+            "git", "just", "npm", "python", "mysql"
+          ],
+          "maxProcesses": 5
+        }
+      }
+    }
+  },
+  "defaultRuntime": "typescript",
+  "autoDetection": {
+    "typescript": [".ts", "import", "export", "interface"],
+    "python": [".py", "import ", "def ", "pandas", "numpy"],
+    "javascript": [".js", "const ", "let ", "var ", "function"],
+    "bash": [".sh", "#!/bin/bash", "echo", "grep", "awk"]
+  }
+}
