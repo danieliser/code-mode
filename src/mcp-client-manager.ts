@@ -196,11 +196,14 @@ export class MCPClientManager extends EventEmitter {
             });
 
             // Now discover tools after handshake is complete
-            this.discoverServerTools(server).then(() => {
-              console.log(`[MCP] Tool discovery completed for ${server.name}`);
-            }).catch(error => {
-              console.warn(`[MCP] Tool discovery failed for ${server.name}:`, error);
-            });
+            // Give server a moment to fully initialize before tool discovery
+            setTimeout(() => {
+              this.discoverServerTools(server).then(() => {
+                console.log(`[MCP] Tool discovery completed for ${server.name}`);
+              }).catch(error => {
+                console.warn(`[MCP] Tool discovery failed for ${server.name}:`, error);
+              });
+            }, 1000); // Wait 1 second for server to be fully ready
 
             resolve();
           }
