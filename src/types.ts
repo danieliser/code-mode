@@ -9,6 +9,7 @@ export interface RuntimeConfig {
   allowedModules: string[];
   deniedOperations: string[];
   sandboxType: 'vm2' | 'docker' | 'worker' | 'subprocess';
+  permissions?: SecurityPermissions;
 }
 
 export interface ExecutionRequest {
@@ -106,4 +107,69 @@ export interface MCPToolMapping {
       implementation: string;
     };
   };
+}
+
+// Security types
+export interface SecurityContext {
+  runtime: string;
+  permissions: SecurityPermissions;
+  userContext?: Record<string, any>;
+}
+
+export interface SecurityValidation {
+  allowed: boolean;
+  reason?: string;
+  riskLevel?: 'low' | 'medium' | 'high';
+}
+
+// MCP Client types
+export interface MCPClientConfig {
+  fallbackToMock?: boolean;
+  securityEnabled?: boolean;
+  timeout?: number;
+  retryAttempts?: number;
+  connectionTimeout?: number;
+}
+
+export interface MCPRequest {
+  jsonrpc: '2.0';
+  id: string;
+  method: string;
+  params?: Record<string, any>;
+}
+
+export interface MCPResponse {
+  jsonrpc: '2.0';
+  id: string;
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
+export interface MCPConnection {
+  serverId: string;
+  status: 'connecting' | 'connected' | 'disconnected' | 'error';
+  lastPing?: number;
+  errorCount: number;
+  process?: any;
+}
+
+// Rate limiting types
+export interface RateLimit {
+  windowMs: number;
+  maxRequests: number;
+  currentCount: number;
+  windowStart: number;
+}
+
+export interface SecurityAuditEntry {
+  timestamp: number;
+  serverName: string;
+  toolName: string;
+  allowed: boolean;
+  reason?: string;
+  userContext?: Record<string, any>;
 }

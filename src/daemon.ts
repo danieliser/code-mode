@@ -45,7 +45,7 @@ export class CodeModeDaemon {
     logEnvironmentInfo();
 
     // Initialize runtime manager
-    await this.runtimeManager.initialize(this.config.features);
+    await this.runtimeManager.initialize();
 
     // Write PID file
     writeFileSync(PID_FILE, process.pid.toString());
@@ -126,7 +126,7 @@ export async function bootService(): Promise<void> {
   };
 
   console.log('🔧 Initializing runtimes...');
-  await runtimeManager.initialize(features);
+  await runtimeManager.initialize();
 
   console.log('✅ Service boot complete');
 
