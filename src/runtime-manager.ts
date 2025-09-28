@@ -52,8 +52,9 @@ export class LocalRuntimeManager implements RuntimeManager {
    */
   private async initializeMCPClient(): Promise<void> {
     try {
-      // Load MCP configuration from project root (parent directory)
-      const mcpConfigPath = path.join(process.cwd(), '..', '..', '.mcp.json');
+      // Load MCP configuration from project root
+      const currentDir = path.dirname(new URL(import.meta.url).pathname);
+      const mcpConfigPath = path.join(currentDir, '..', '..', '..', '.mcp.json');
       const mcpConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
       const mcpConfig = JSON.parse(mcpConfigContent);
 

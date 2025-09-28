@@ -10,7 +10,6 @@ import {
   SecurityAuditEntry
 } from './types.js';
 
-export { SecurityContext } from './types.js';
 
 export interface SecurityPolicy {
   allowedServers: string[];

@@ -148,8 +148,8 @@ export class MCPClientManager extends EventEmitter {
         }
       });
 
-      // Send initialization handshake
-      this.sendStdioMessage(server, {
+      // Send initialization handshake and wait for response
+      const initRequest = {
         jsonrpc: '2.0',
         id: this.generateRequestId(),
         method: 'initialize',
@@ -163,14 +163,37 @@ export class MCPClientManager extends EventEmitter {
             version: '1.0.0'
           }
         }
-      });
+      };
 
-      // Timeout for initialization
-      setTimeout(() => {
+      // Set up response handler for initialization
+      const initTimeout = setTimeout(() => {
         if (server.status === 'starting') {
           reject(new Error('Server initialization timeout'));
         }
       }, this.config.timeout);
+
+      const initResponseHandler = (data: Buffer) => {
+        try {
+          const response = JSON.parse(data.toString());
+          if (response.id === initRequest.id) {
+            clearTimeout(initTimeout);
+            server.process!.stdout!.off('data', initResponseHandler);
+
+            // Send initialized notification
+            this.sendStdioMessage(server, {
+              jsonrpc: '2.0',
+              method: 'initialized'
+            });
+
+            resolve();
+          }
+        } catch (error) {
+          // Ignore parse errors
+        }
+      };
+
+      server.process.stdout.on('data', initResponseHandler);
+      this.sendStdioMessage(server, initRequest);
     });
   }
 
@@ -318,7 +341,7 @@ export class MCPClientManager extends EventEmitter {
   /**
    * Send message to stdio server
    */
-  private sendStdioMessage(server: MCPServerInstance, message: MCPRequest): void {
+  private sendStdioMessage(server: MCPServerInstance, message: MCPRequest | { jsonrpc: '2.0'; method: string; params?: any }): void {
     if (!server.process?.stdin) {
       throw new Error('Server stdin not available');
     }
