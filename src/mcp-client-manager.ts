@@ -96,9 +96,7 @@ export class MCPClientManager extends EventEmitter {
         await this.startStdioServer(server);
       }
 
-      // Discover tools
-      await this.discoverServerTools(server);
-
+      // Note: Tool discovery happens after successful handshake in startStdioServer
       server.status = 'ready';
       console.log(`[MCP] Server ${name} ready with ${server.tools.size} tools`);
     } catch (error) {
@@ -114,6 +112,11 @@ export class MCPClientManager extends EventEmitter {
   private async startStdioServer(server: MCPServerInstance): Promise<void> {
     return new Promise((resolve, reject) => {
       const { command, args = [], env = {} } = server.config;
+
+      console.log(`[MCP] Starting stdio server ${server.name}`);
+      console.log(`[MCP] Command: ${command}`);
+      console.log(`[MCP] Args:`, args);
+      console.log(`[MCP] Env vars:`, Object.keys(env));
 
       server.process = spawn(command, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -138,14 +141,21 @@ export class MCPClientManager extends EventEmitter {
       server.process.stdout.on('data', onData);
 
       server.process.on('error', (error) => {
+        console.error(`[MCP] Server ${server.name} process error:`, error);
         reject(new Error(`Server process error: ${error.message}`));
       });
 
       server.process.on('exit', (code) => {
+        console.log(`[MCP] Server ${server.name} exited with code ${code}`);
         if (code !== 0) {
           server.status = 'error';
-          console.error(`[MCP] Server ${server.name} exited with code ${code}`);
+          console.error(`[MCP] Server ${server.name} failed with exit code ${code}`);
         }
+      });
+
+      // Log stderr output for debugging
+      server.process.stderr?.on('data', (data) => {
+        console.error(`[MCP] ${server.name} stderr:`, data.toString());
       });
 
       // Send initialization handshake and wait for response
@@ -182,7 +192,14 @@ export class MCPClientManager extends EventEmitter {
             // Send initialized notification
             this.sendStdioMessage(server, {
               jsonrpc: '2.0',
-              method: 'initialized'
+              method: 'notifications/initialized'
+            });
+
+            // Now discover tools after handshake is complete
+            this.discoverServerTools(server).then(() => {
+              console.log(`[MCP] Tool discovery completed for ${server.name}`);
+            }).catch(error => {
+              console.warn(`[MCP] Tool discovery failed for ${server.name}:`, error);
             });
 
             resolve();
@@ -211,9 +228,12 @@ export class MCPClientManager extends EventEmitter {
    */
   private async discoverServerTools(server: MCPServerInstance): Promise<void> {
     try {
+      console.log(`[MCP] Discovering tools for ${server.name}...`);
       const response = await this.sendRequest(server.name, 'tools/list');
+      console.log(`[MCP] Tools response for ${server.name}:`, JSON.stringify(response, null, 2));
 
       if (response.result?.tools) {
+        console.log(`[MCP] Found ${response.result.tools.length} tools for ${server.name}`);
         for (const tool of response.result.tools) {
           const toolDef: ToolDefinition = {
             name: tool.name,
@@ -226,7 +246,10 @@ export class MCPClientManager extends EventEmitter {
           };
 
           server.tools.set(tool.name, toolDef);
+          console.log(`[MCP] Added tool: ${tool.name} from ${server.name}`);
         }
+      } else {
+        console.log(`[MCP] No tools found in response for ${server.name}:`, response);
       }
     } catch (error) {
       console.warn(`[MCP] Failed to discover tools for ${server.name}:`, error);
