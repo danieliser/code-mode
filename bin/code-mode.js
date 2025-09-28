@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
-const { join } = require('path');
-const { existsSync, readFileSync } = require('fs');
+import { spawn } from 'child_process';
+import { join, dirname } from 'path';
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const DAEMON_SCRIPT = join(__dirname, '../src/daemon.ts');
 const PID_FILE = join(process.cwd(), '.daemon-pid');
@@ -60,7 +64,7 @@ async function main() {
     case 'start':
       console.log('🚀 Starting Code Mode daemon...');
       try {
-        await runCommand('npx ts-node', [DAEMON_SCRIPT, 'start']);
+        await runCommand('npx tsx', [DAEMON_SCRIPT, 'start']);
       } catch (error) {
         console.error('❌ Failed to start daemon:', error.message);
         process.exit(1);
@@ -105,7 +109,7 @@ async function main() {
             // Wait a moment then start
             setTimeout(async () => {
               try {
-                await runCommand('npx ts-node', [DAEMON_SCRIPT, 'start']);
+                await runCommand('npx tsx', [DAEMON_SCRIPT, 'start']);
               } catch (error) {
                 console.error('❌ Failed to restart daemon:', error.message);
                 process.exit(1);
@@ -118,7 +122,7 @@ async function main() {
         }
       } else {
         try {
-          await runCommand('npx ts-node', [DAEMON_SCRIPT, 'start']);
+          await runCommand('npx tsx', [DAEMON_SCRIPT, 'start']);
         } catch (error) {
           console.error('❌ Failed to start daemon:', error.message);
           process.exit(1);
@@ -138,9 +142,9 @@ async function main() {
         // This would connect to the daemon's execution endpoint
         // For now, we'll use ts-node directly
         const tempFile = join(process.cwd(), 'temp-execution.ts');
-        require('fs').writeFileSync(tempFile, code);
-        await runCommand('npx ts-node', [tempFile]);
-        require('fs').unlinkSync(tempFile);
+        writeFileSync(tempFile, code);
+        await runCommand('npx tsx', [tempFile]);
+        unlinkSync(tempFile);
       } catch (error) {
         console.error('❌ Execution failed:', error.message);
         process.exit(1);
