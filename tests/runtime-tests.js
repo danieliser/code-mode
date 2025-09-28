@@ -1,4 +1,4 @@
-// CompanyKit Code Mode - Runtime Tests
+// Code Mode - Runtime Tests
 // Test suite for validating multi-runtime execution
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -52,7 +52,7 @@ describe('Code Mode Runtime Tests', () => {
 
       expect(health).toMatchObject({
         status: 'healthy',
-        service: 'CompanyKit Local Code Mode',
+        service: 'Code Mode',
         version: '1.0.0',
         runtimes: expect.arrayContaining(['typescript', 'python', 'javascript', 'bash'])
       });

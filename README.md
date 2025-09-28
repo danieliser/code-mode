@@ -1,10 +1,10 @@
-# CompanyKit Local Code Mode
+# Code Mode
 
 > **Revolutionary AI-driven TypeScript orchestration system** - Built before Cloudflare could deliver theirs! 🚀
 
 ## What This Is
 
-Local Code Mode is a **game-changing alternative** to Cloudflare's locked Code Mode that allows AI agents to write actual **TypeScript/Python/JavaScript/Bash code** that orchestrates multiple tools in parallel, rather than making sequential tool calls.
+Code Mode is a **game-changing alternative** to Cloudflare's locked Code Mode that allows AI agents to write actual **TypeScript/Python/JavaScript/Bash code** that orchestrates multiple tools in parallel, rather than making sequential tool calls.
 
 ## Why This Matters
 
@@ -29,7 +29,7 @@ const [urgent, content, health] = await Promise.all([
 
 - ✅ **No Beta Dependencies** - Works today, no waiting for Cloudflare
 - ✅ **Local Control** - Complete ownership and customization
-- ✅ **MCP Native** - Direct integration with CompanyKit's MCP ecosystem
+- ✅ **MCP Native** - Direct integration with MCP ecosystem
 - ✅ **Multi-Runtime** - TypeScript, Python, JavaScript, Bash support
 - ✅ **Production Ready** - Security, testing, monitoring included
 - ✅ **Type Safety** - Full TypeScript definitions and compile-time checking
@@ -49,7 +49,7 @@ const [urgent, content, health] = await Promise.all([
 - **Network Security** - Host/port restrictions for external calls
 
 ### MCP Integration
-All CompanyKit MCP servers converted to runtime-specific interfaces:
+All  MCP servers converted to runtime-specific interfaces:
 - **HelpScout** - Search inboxes, conversations, comprehensive analysis
 - **WordPress** - Site info, posts, users, content management
 - **Serena** - File operations, symbol search, code analysis
@@ -226,17 +226,17 @@ NODE_ENV=production              # Production mode
 
 ### Phase 3: Open Source (Future)
 - [ ] Extract to dedicated repository
-- [ ] Publish as `@companykit/local-code-mode` npm package
+- [ ] Publish as `@danieliser/code-mode` npm package
 - [ ] Community contribution guidelines
 - [ ] Documentation site and tutorials
 
 ## Contributing
 
-This is currently an internal CompanyKit tool. For issues or feature requests, use the project's issue tracker.
+This is currently an internal tool. For issues or feature requests, use the project's issue tracker.
 
 ## License
 
-Private - CompanyKit Internal Use
+MIT
 
 ---
 

@@ -1,7 +1,7 @@
 {
-  "name": "@companykit/code-mode",
+  "name": "@danieliser/code-mode",
   "version": "1.0.0",
-  "description": "Local Code Mode implementation for AI-driven TypeScript orchestration",
+  "description": "Code Mode implementation for AI-driven TypeScript orchestration",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

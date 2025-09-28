@@ -23,7 +23,7 @@ app.use(express.json({ limit: '10mb' }));
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'CompanyKit Local Code Mode',
+    service: 'Code Mode',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     runtimes: ['typescript', 'python', 'javascript', 'bash']
@@ -130,7 +130,7 @@ def analyze_support_metrics():
 # System health check example
 
 check_system_health() {
-    echo "=== CompanyKit System Health Check ==="
+    echo "=== Code Mode System Health Check ==="
 
     # Check data freshness
     echo "Checking data freshness..."
@@ -293,7 +293,7 @@ wss.on('connection', (ws) => {
 // Initialize and start server
 async function initialize() {
   try {
-    console.log('🚀 Initializing CompanyKit Code Mode...');
+    console.log('🚀 Initializing Code Mode...');
 
     // Initialize runtime manager
     await runtimeManager.initialize();

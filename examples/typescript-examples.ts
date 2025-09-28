@@ -1,4 +1,4 @@
-// CompanyKit Code Mode - TypeScript Examples
+// Code Mode - TypeScript Examples
 // These examples demonstrate AI-driven TypeScript orchestration
 
 // Example 1: Urgent Support Ticket Analysis

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CompanyKit Code Mode - Python Examples
+Code Mode - Python Examples
 Data analysis workflows using the Python runtime
 """
 
