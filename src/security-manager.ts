@@ -49,19 +49,19 @@ export class SecurityManager {
 
   constructor(policy: Partial<SecurityPolicy> = {}) {
     this.policy = {
-      allowedServers: ['automem', 'serena', 'helpscout', 'wordpress'],
+      allowedServers: ['automem', 'serena', 'helpscout', 'WordPressAPI'],
       allowedTools: {
-        automem: ['store_memory', 'recall', 'associate', 'analyze'],
-        serena: ['get_symbols_overview', 'search_for_pattern'],
-        helpscout: ['searchConversations', 'getConversationSummary'],
-        wordpress: ['get_site_info', 'wp_feature_query-posts']
+        automem: '*', // Allow all AutoMem tools
+        serena: '*', // Allow all Serena tools
+        helpscout: '*', // Allow all HelpScout tools
+        WordPressAPI: '*' // Allow all WordPress tools
       },
       rateLimits: {
         default: { requestsPerMinute: 60, maxConcurrent: 5 },
         automem: { requestsPerMinute: 100, maxConcurrent: 10 },
         serena: { requestsPerMinute: 30, maxConcurrent: 3 },
         helpscout: { requestsPerMinute: 20, maxConcurrent: 2 },
-        wordpress: { requestsPerMinute: 30, maxConcurrent: 3 }
+        WordPressAPI: { requestsPerMinute: 30, maxConcurrent: 3 }
       },
       dataValidation: {
         maxPayloadSize: 1024 * 1024, // 1MB
