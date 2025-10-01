@@ -27,6 +27,7 @@ export interface MCPServerInstance {
     reject: (error: Error) => void;
     timeout: NodeJS.Timeout;
   }>;
+  buffer: string; // Buffer for incomplete JSON messages
 }
 
 export class MCPClientManager extends EventEmitter {
@@ -81,7 +82,8 @@ export class MCPClientManager extends EventEmitter {
       status: 'starting',
       tools: new Map(),
       lastHeartbeat: new Date(),
-      requestQueue: []
+      requestQueue: [],
+      buffer: '' // Initialize buffer for JSON parsing
     };
 
     this.servers.set(name, server);
@@ -334,25 +336,37 @@ export class MCPClientManager extends EventEmitter {
    * Handle stdio response from MCP server
    */
   private handleStdioResponse(server: MCPServerInstance, data: Buffer): void {
-    const response = data.toString().trim();
-    if (!response) return;
+    // Add new data to buffer
+    server.buffer += data.toString();
 
-    try {
-      const parsed: MCPResponse = JSON.parse(response);
+    // Try to parse complete JSON messages
+    let newlineIndex;
+    while ((newlineIndex = server.buffer.indexOf('\n')) !== -1) {
+      const jsonLine = server.buffer.substring(0, newlineIndex).trim();
+      server.buffer = server.buffer.substring(newlineIndex + 1);
 
-      // Find corresponding request in queue
-      const queueIndex = server.requestQueue.findIndex(item => item.id === parsed.id);
-      if (queueIndex >= 0) {
-        const queueItem = server.requestQueue.splice(queueIndex, 1)[0];
+      if (!jsonLine) continue;
 
-        if (parsed.error) {
-          queueItem.reject(new Error(`MCP Error: ${parsed.error.message}`));
-        } else {
-          queueItem.resolve(parsed);
+      try {
+        const parsed: MCPResponse = JSON.parse(jsonLine);
+
+        // Find corresponding request in queue
+        const queueIndex = server.requestQueue.findIndex(item => item.id === parsed.id);
+        if (queueIndex >= 0) {
+          const queueItem = server.requestQueue.splice(queueIndex, 1)[0];
+
+          if (parsed.error) {
+            queueItem.reject(new Error(`MCP Error: ${parsed.error.message}`));
+          } else {
+            queueItem.resolve(parsed);
+          }
+
+          clearTimeout(queueItem.timeout);
         }
+      } catch (error) {
+        console.error(`[MCP] Failed to parse response from ${server.name}:`, error);
+        console.error(`[MCP] Invalid JSON: ${jsonLine.substring(0, 200)}...`);
       }
-    } catch (error) {
-      console.error(`[MCP] Failed to parse response from ${server.name}:`, error);
     }
   }
 

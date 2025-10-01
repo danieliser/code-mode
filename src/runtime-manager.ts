@@ -71,7 +71,20 @@ export class LocalRuntimeManager implements RuntimeManager {
         };
       }
 
-      await this.mcpClient.initialize(serverConfigs);
+      // Add timeout wrapper to allow partial success
+      console.log('[Runtime] Initializing MCP client with 45-second timeout...');
+      const initPromise = this.mcpClient.initialize(serverConfigs);
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => reject(new Error('MCP initialization timeout')), 45000);
+      });
+
+      try {
+        await Promise.race([initPromise, timeoutPromise]);
+        console.log('[Runtime] MCP client initialization completed successfully');
+      } catch (timeoutError) {
+        console.warn('[Runtime] MCP initialization timed out, proceeding with partial connectivity');
+        // Allow partial success - some servers may be working
+      }
     } catch (error) {
       console.warn('[MCP] Failed to initialize MCP client, falling back to mocks:', error);
       this.fallbackToMocks = true;
@@ -174,6 +187,7 @@ export class LocalRuntimeManager implements RuntimeManager {
     try {
       // Compile TypeScript to JavaScript if needed
       let code = request.code;
+      const originalCode = request.code; // Keep original for error reporting
       if (runtime.language === 'typescript') {
         code = await this.compileTypeScript(request.code);
       }
@@ -194,7 +208,10 @@ export class LocalRuntimeManager implements RuntimeManager {
         }
       };
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+      // Enhanced error reporting with line context
+      const enhancedError = this.enhanceVMError(error, request.code);
+      errors.push(enhancedError);
+
       return {
         success: false,
         output: null,
@@ -352,8 +369,12 @@ export class LocalRuntimeManager implements RuntimeManager {
             this.securityManager.trackRequestStart(serverName);
 
             try {
-              // Call real MCP server
-              if (!this.fallbackToMocks && this.mcpClient.isServerAvailable(serverName)) {
+              // Call real MCP server - FORCE REAL API CALLS FOR TESTING
+              console.log(`[DEBUG] fallbackToMocks: ${this.fallbackToMocks}, isServerAvailable(${serverName}): ${this.mcpClient.isServerAvailable(serverName)}`);
+
+              // Always try real API first, ignore fallback flag temporarily
+              if (this.mcpClient.isServerAvailable(serverName)) {
+                console.log(`[DEBUG] Attempting real MCP call to ${serverName}.${toolName}`);
                 const response = await this.mcpClient.sendRequest(serverName, `tools/call`, {
                   name: toolName,
                   arguments: params
@@ -361,6 +382,7 @@ export class LocalRuntimeManager implements RuntimeManager {
 
                 return this.formatMCPResponse(response);
               } else {
+                console.log(`[DEBUG] Server ${serverName} not available, falling back to mock`);
                 // Fallback to mock
                 return this.createLegacyMockResponse(serverName, toolName, args);
               }
@@ -616,5 +638,91 @@ def serena_get_symbols_overview(relative_path):
     }
 
     return status;
+  }
+
+  /**
+   * Enhanced VM error reporting with line context and syntax suggestions
+   */
+  private enhanceVMError(error: any, originalCode: string): string {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const lines = originalCode.split('\n');
+
+    // Extract line number from error if available
+    let lineNumber: number | null = null;
+    const lineMatch = errorMessage.match(/line (\d+)/i) ||
+                     errorMessage.match(/at line (\d+)/i) ||
+                     errorMessage.match(/(\d+):\d+/);
+
+    if (lineMatch) {
+      lineNumber = parseInt(lineMatch[1], 10);
+    }
+
+    // Build enhanced error message
+    let enhanced = `VM2 Execution Error: ${errorMessage}\n`;
+    enhanced += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+    // Add line context if we found a line number
+    if (lineNumber && lineNumber > 0 && lineNumber <= lines.length) {
+      const contextStart = Math.max(1, lineNumber - 2);
+      const contextEnd = Math.min(lines.length, lineNumber + 2);
+
+      enhanced += `Code Context (lines ${contextStart}-${contextEnd}):\n`;
+      for (let i = contextStart; i <= contextEnd; i++) {
+        const line = lines[i - 1];
+        const marker = i === lineNumber ? '>>> ' : '    ';
+        enhanced += `${marker}${i.toString().padStart(3)}: ${line}\n`;
+      }
+      enhanced += `\n`;
+    }
+
+    // Add specific suggestions based on error patterns
+    enhanced += this.getSyntaxSuggestions(errorMessage, originalCode);
+
+    return enhanced;
+  }
+
+  /**
+   * Provide syntax suggestions based on common VM2 limitations
+   */
+  private getSyntaxSuggestions(errorMessage: string, code: string): string {
+    let suggestions = "💡 VM2 Compatibility Suggestions:\n";
+
+    // Check for async/await usage
+    if (errorMessage.includes('await') || code.includes('async') || code.includes('await')) {
+      suggestions += "   • Replace async/await with .then() chains\n";
+      suggestions += "   • Example: result.then(data => console.log(data))\n";
+    }
+
+    // Check for arrow functions in complex contexts
+    if (errorMessage.includes('Unexpected token') && code.includes('=>')) {
+      suggestions += "   • Try using function() instead of => in some contexts\n";
+      suggestions += "   • VM2 has limited arrow function support\n";
+    }
+
+    // Check for template literals
+    if (errorMessage.includes('Unexpected token') && (code.includes('`') || code.includes('${}'))) {
+      suggestions += "   • Replace template literals `${}` with string concatenation\n";
+      suggestions += "   • Example: 'Hello ' + name instead of `Hello ${name}`\n";
+    }
+
+    // Check for destructuring
+    if (errorMessage.includes('Unexpected token') && (code.includes('{') && code.includes('}'))) {
+      suggestions += "   • VM2 has limited destructuring support\n";
+      suggestions += "   • Try accessing properties directly: obj.prop instead of {prop}\n";
+    }
+
+    // Check for spread operator
+    if (code.includes('...')) {
+      suggestions += "   • Replace spread operator (...) with explicit array/object methods\n";
+      suggestions += "   • Example: Array.from() or Object.assign()\n";
+    }
+
+    // General ES6+ features
+    if (errorMessage.includes('Unexpected') || errorMessage.includes('SyntaxError')) {
+      suggestions += "   • VM2 has limited ES6+ support - use ES5 syntax when possible\n";
+      suggestions += "   • Avoid: const/let (use var), classes, modules, advanced features\n";
+    }
+
+    return suggestions;
   }
 }
